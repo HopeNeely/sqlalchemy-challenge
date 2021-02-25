@@ -76,24 +76,55 @@ def precipitation():
  
 @app.route("/api/v1.0/stations")
 def stations():
-    print("Server recieved request for 'stations' page...")
-    return("stations")
-    """ 
-    Return a JSON list of stations from the dataset.
-    
     """
+    Create our session (link) from Python to the DB
+    """
+    session = Session(engine)
 
+    """
+    Return a JSON list of stations from the dataset.
+    """
+    station_counts = session.query(Measurement.station).group_by(Measurement.station).order_by(func.count(Measurement.station).desc()).all()
+
+    session.close()
+
+    stations = list(np.ravel(station_counts))
+
+    print("Server recieved request for 'stations' page...")
+    return jsonify(stations)
+    
+    
 
 @app.route("/api/v1.0/tobs")
 def tobs():
-    print("Server recieved request for 'tobs' page...")
-    return("tobs")
+    """
+    Create our session (link) from Python to the DB
+    """
+    session = Session(engine)    
+    
     """ 
-    Query the dates and temperature observations of the most active station for the last year of data.
-
-    Return a JSON list of temperature observations (TOBS) for the previous year.
+    Query the dates and temperature observations of the most active station for the last year of data.   
+    """
+    temp = session.query(Measurement.station, Measurement.tobs).filter(Measurement.station == 'USC00519523').all()
+    
+    session.close()
+    
+    
+    temperature = []
+    for station, tobs  in temp:
+        tobs_dict = {}
+        tobs_dict["station"] = station
+        tobs_dict["tobs"] = tobs
+        temperature.append(tobs_dict)
     
     """
+    Return a JSON list of temperature observations (TOBS) for the previous year.
+    """ 
+    print("Server recieved request for 'tobs' page...")
+    return jsonify(temperature)
+
+
+  
 """
 @app.route("/api/v1.0/<start>/<end>")
 def temperature(start, end):
