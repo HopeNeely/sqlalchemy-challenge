@@ -1,8 +1,36 @@
+import numpy as np
+
+import sqlalchemy
+from sqlalchemy.ext.automap import automap_base
+from sqlalchemy.orm import Session
+from sqlalchemy import create_engine, func
+
 from flask import Flask, jsonify
 
+
+"""
+Database Setup
+"""
+engine = create_engine("sqlite:///Resources/hawaii.sqlite")
+# reflect an existing database into a new model
+Base = automap_base()
+# reflect the tables
+Base.prepare(engine, reflect=True)
+
+# Save references to the tables
+Measurement = Base.classes.measurement
+Station = Base.classes.station
+
+
+"""
+Flask Setup
+"""
 app = Flask(__name__)
 
 
+"""
+Flask Routes
+"""
 @app.route("/")
 def home():
     print("Server recieved request for 'Home' page...")
@@ -15,19 +43,36 @@ def home():
         "/api/v1.0/<start>/<end>"
         )
 
+
 @app.route("/api/v1.0/precipitation")
 def precipitation():
-    print("Server recieved request for 'precipitation' page...")
-    return("precipitation")
+    """ 
+    Create our session (link) from Python to the DB 
+    """
+    session = Session(engine)
+
     """    
-    Query the dates and temperature observations of the most active station for the last year of data.
+    Convert the query results to a dictionary using `date` as the key and `prcp` as the value.
+    """
+    year_data = session.query(Measurement.date, Measurement.prcp).filter(Measurement.date > 2016-8-23).order_by(Measurement.date).all()
+
+    session.close()
+
+    precip = []
+    for date, prcp in year_data:
+        prcp_dict = {}
+        prcp_dict["date"] = date
+        prcp_dict["prcp"] = prcp
+        precip.append(prcp_dict)
+
+
+    """
+    Return the JSON representation of your dictionary.
+    """
+    print("Server recieved request for 'precipitation' page...")
+    return jsonify(precip)
     
-    Return a JSON list of temperature observations (TOBS) for the previous year.
-    """
-    """
-    Note: for specific routes: 
-    return jsonify("precipitation analysis")
-    """
+
  
 @app.route("/api/v1.0/stations")
 def stations():
