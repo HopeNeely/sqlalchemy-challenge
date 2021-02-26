@@ -40,7 +40,9 @@ def home():
         "/api/v1.0/precipitation<br/>"
         "/api/v1.0/stations<br/>"
         "/api/v1.0/tobs<br/>"
-        "/api/v1.0/<start>/<end>"
+        "<br/>"
+        "Pick a start date after 2016-8-23 and enter date in yyyy-mm-dd form after the following route:<br/>"
+        "/api/v1.0/<start>"
         )
 
 
@@ -54,7 +56,7 @@ def precipitation():
     """    
     Convert the query results to a dictionary using `date` as the key and `prcp` as the value.
     """
-    year_data = session.query(Measurement.date, Measurement.prcp).filter(Measurement.date > 2016-8-23).order_by(Measurement.date).all()
+    year_data = session.query(Measurement.date, Measurement.prcp).filter(Measurement.date >= 2016-8-23).order_by(Measurement.date.desc()).all()
 
     session.close()
 
@@ -84,7 +86,7 @@ def stations():
     """
     Return a JSON list of stations from the dataset.
     """
-    station_counts = session.query(Measurement.station).group_by(Measurement.station).order_by(func.count(Measurement.station).desc()).all()
+    station_counts = session.query(Measurement.station).group_by(Measurement.station).order_by(func.count(Measurement.station)).all()
 
     session.close()
 
