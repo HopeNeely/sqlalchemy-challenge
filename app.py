@@ -105,63 +105,52 @@ def tobs():
     """ 
     Query the dates and temperature observations of the most active station for the last year of data.   
     """
-    temp = session.query(Measurement.station, Measurement.tobs).filter(Measurement.station == 'USC00519523').all()
+    year_temp_data = session.query(Measurement.date, Measurement.station, Measurement.tobs).\
+    filter(Measurement.date > 2016-8-23).\
+    filter(Measurement.station == 'USC00519523').\
+    order_by(Measurement.date).all() 
     
     session.close()
     
     
-    temperature = []
-    for station, tobs  in temp:
+    temp = []
+    for date, station, tobs  in year_temp_data:
         tobs_dict = {}
+        tobs_dict["date"] = date
         tobs_dict["station"] = station
         tobs_dict["tobs"] = tobs
-        temperature.append(tobs_dict)
+        temp.append(tobs_dict)
     
     """
     Return a JSON list of temperature observations (TOBS) for the previous year.
     """ 
     print("Server recieved request for 'tobs' page...")
-    return jsonify(temperature)
+    return jsonify(temp)
 
 
-  
-"""
-@app.route("/api/v1.0/<start>/<end>")
-def temperature(start, end):
-    print("start/end")
-"""
 
-"""
-Return a JSON list of the minimum temperature, the average temperature, and the max temperature for a given start or start-end range.
-
-When given the start only, calculate `TMIN`, `TAVG`, and `TMAX` for all dates greater than and equal to the start date.
-
-When given the start and the end date, calculate the `TMIN`, `TAVG`, and `TMAX` for dates between the start and end date inclusive.
+@app.route("/api/v1.0/<start>")
+def temperature(start):
+    """
+    Create our session (link) from Python to the DB
+    """    
+    session = Session(engine)  
     
-"""
+    """
+    Return a JSON list of the minimum temperature, the average temperature, and the max temperature for range after start.
+    When given the start and the end date, calculate the `TMIN`, `TAVG`, and `TMAX` for dates between the start and end date inclusive.
+    """
+    temperature = session.query(func.min(Measurement.tobs), func.avg(Measurement.tobs), func.max(Measurement.tobs)).\
+                    filter(Measurement.date >= start).all()
+    
+    session.close()
+    
+    t = list(np.ravel(temperature))
 
-"""
-This is an example from class:
-Fetch the Justice League character whose real_name matches
-the path variable supplied by the user, or a 404 if not."""
 
-"""
-    canonicalized = real_name.replace(" ", "").lower()
-    for character in justice_league_members:
-        search_term = character["real_name"].replace(" ", "").lower()
+    print("Server recieved request for 'temperature' page...")
+    return jsonify(t)
 
-        if search_term == canonicalized:
-            return jsonify(character)
-
-    return jsonify({"error": f"Character with real_name {real_name} not found."}), 404
-"""
-
-"""
-I don't think I need this. 
-@app.route("/api/v1.0/<end>")
-def <end>():
-    print("<end>")
-"""
 
 
 if __name__ == "__main__":
