@@ -4,6 +4,7 @@ import sqlalchemy
 from sqlalchemy.ext.automap import automap_base
 from sqlalchemy.orm import Session
 from sqlalchemy import create_engine, func
+import datetime as dt
 
 from flask import Flask, jsonify
 
@@ -56,7 +57,11 @@ def precipitation():
     """    
     Convert the query results to a dictionary using `date` as the key and `prcp` as the value.
     """
-    year_data = session.query(Measurement.date, Measurement.prcp).filter(Measurement.date >= 2016-8-23).order_by(Measurement.date.desc()).all()
+    year = dt.date(2017,8,23) - dt.timedelta(days=365)
+
+    year_data = session.query(Measurement.date, Measurement.prcp).\
+        filter(Measurement.date >= year).\
+        order_by(Measurement.date).all()
 
     session.close()
 
@@ -107,10 +112,12 @@ def tobs():
     """ 
     Query the dates and temperature observations of the most active station for the last year of data.   
     """
+    year = dt.date(2017,8,23) - dt.timedelta(days=365)
+
     year_temp_data = session.query(Measurement.date, Measurement.station, Measurement.tobs).\
-    filter(Measurement.date > 2016-8-23).\
-    filter(Measurement.station == 'USC00519523').\
-    order_by(Measurement.date).all() 
+        filter(Measurement.date >= year).\
+        filter(Measurement.station == 'USC00519523').\
+        order_by(Measurement.date).all() 
     
     session.close()
     
